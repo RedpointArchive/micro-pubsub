@@ -1,0 +1,15 @@
+{
+  "name": "micro-pubsub",
+  "version": "0.1.0",
+  "description": "An in-memory Pub/Sub server that supports explicit acknowledgements and shared client IDs.",
+  "main": "index.js",
+  "author": "Redpoint Games Pty Ltd",
+  "license": "MIT",
+  "homepage": "https://www.redpointgames.com.au/",
+  "devDependencies": {
+    "eslint": "^3.8.1"
+  },
+  "dependencies": {
+    "uuid": "^2.0.3"
+  }
+}
