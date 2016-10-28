@@ -1,6 +1,6 @@
 {
   "name": "micro-pubsub",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "An in-memory Pub/Sub server that supports explicit acknowledgements and shared client IDs.",
   "main": "index.js",
   "author": "Redpoint Games Pty Ltd",

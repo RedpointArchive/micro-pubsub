@@ -1,0 +1,268 @@
+<!DOCTYPE>
+<html>
+  <head>
+    <title>Micro Pub/Sub Statistics</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous" />
+    <style type="text/css">
+      .chart {
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Micro Pub/Sub Statistics</h1>
+      <div class="row">
+        <div class="col-lg-12">
+          <h3>Publish Operations</h3>
+          <div class="chart">
+            <canvas id="publish-ops" width="400" height="50"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-6">
+          <h3>Pull Operations</h3>
+          <div class="chart">
+            <canvas id="pull-ops" width="400" height="100"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <h3>Acknowledgement Operations</h3>
+          <div class="chart">
+            <canvas id="ack-ops" width="400" height="100"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-6">
+          <h3>Unreserved (Message Expired) Operations</h3>
+          <div class="chart">
+            <canvas id="unreserve-ops" width="400" height="100"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <h3>Dropped Message Operations</h3>
+          <div class="chart">
+            <canvas id="drop-ops" width="400" height="100"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-lg-6">
+          <h3>Messages In-Memory</h3>
+          <div class="chart">
+            <canvas id="message-count" width="400" height="100"></canvas>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <h3>Messages Reserved</h3>
+          <div class="chart">
+            <canvas id="reserve-count" width="400" height="100"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="/Chart.bundle.min.js"></script>
+    <script type="text/javascript">
+      function generateChart(name, labels, datasets) {
+        return new Chart($("#" + name), {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: datasets
+          },
+          options: {
+            legend: {
+              display: true
+            },
+            scales: {
+              yAxes: [{
+                id: 'y-axis-0',
+                gridLines: {
+                  display: true,
+                  lineWidth: 1,
+                  color: "rgba(0,0,0,0.30)"
+                },
+                ticks: {
+                  beginAtZero:true,
+                  mirror:false,
+                  suggestedMin: 0,
+                },
+                afterBuildTicks: function(chart) {
+
+                }
+              }],
+              xAxes: [{
+                id: 'x-axis-0',
+                gridLines: {
+                  display: true
+                },
+                ticks: {
+                  beginAtZero: true
+                },
+                display: false
+              }]
+            }
+          }
+        });
+      }
+      
+      $.getJSON('/stats.json', function(data) {
+        var itemsInMemoryKnownClients = data.itemsInMemoryKnownClients;
+        var itemsInMemoryHistory = data.itemsInMemoryHistory;
+        var lastSample = data.sampleCount;
+
+        function generateClientChart(name, id) {
+          var datasets = [];
+          var firstLabelSet = [];
+
+          for (var i = 0; i < itemsInMemoryKnownClients.length; i++) {
+            var data = [];
+            
+            for (var idx = 0; idx < itemsInMemoryHistory.length; idx++) {
+              var c = itemsInMemoryHistory[idx].clients[itemsInMemoryKnownClients[i]];
+              if (c == undefined) {
+                data.push(0);
+              } else {
+                var d = c[id];
+                if (d == undefined) {
+                  data.push(0);
+                } else {
+                  data.push(d);
+                }
+              }
+            }
+
+            var dl = data.length;
+            for (var di = 0; di < 60 - data.length; di++) {
+              data.unshift(0);
+            }
+
+            datasets.push({
+              label: itemsInMemoryKnownClients[i],
+              data: data,
+              borderColor: 'hsl(' + (360 * i / 8) + ', 75%, 50%)',
+              backgroundColor: 'rgba(0,0,0,0)'
+            });
+
+            if (firstLabelSet.length < data.length) {
+              for (var a = firstLabelSet.length; a < data.length; a++) {
+                firstLabelSet.push('Time: ' + a);
+              }
+            }
+          }
+
+          return generateChart(name, firstLabelSet, datasets);
+        }
+
+        var publishOpsData = [];
+        for (var i = 0; i < 60 - itemsInMemoryHistory.length; i++) {
+          publishOpsData.push(0);
+        }
+        for (var i = 0; i < itemsInMemoryHistory.length; i++) {
+          publishOpsData.push(itemsInMemoryHistory[i].publishOperationsCount);
+        }
+
+        var publishOps = generateChart('publish-ops', publishOpsData, [
+          {
+            label: '# of Operations',
+            data: publishOpsData,
+            borderColor: 'hsl(0, 75%, 50%)',
+            backgroundColor: 'rgba(0,0,0,0)'
+          }
+        ]);
+
+        var pullOps = generateClientChart('pull-ops', 'pulledOperationsCount');
+        var ackOps = generateClientChart('ack-ops', 'ackedOperationsCount');
+        var unreserveOps = generateClientChart('unreserve-ops', 'unreservedOperationsCount');
+        var dropCount = generateClientChart('drop-ops', 'droppedOperationsCount');
+        var messageCount = generateClientChart('message-count', 'unackedMessageInMemoryCount');
+        var reserveCount = generateClientChart('reserve-count', 'reservedMessageInMemoryCount');
+
+        var updateData;
+
+        function updateData() {
+          $.getJSON('/stats.json', function(data) {
+            var itemsInMemoryKnownClients = data.itemsInMemoryKnownClients;
+            var itemsInMemoryHistory = data.itemsInMemoryHistory;
+            var newSample = data.sampleCount;
+
+            // Adjust the chart based on the sample increment.
+            var diff = newSample - lastSample;
+            for (var i = 0; i < diff; i++) {
+              publishOps.data.datasets[0].data.shift();
+              publishOps.data.datasets[0].data.push(
+                itemsInMemoryHistory[itemsInMemoryHistory.length - diff + i].publishOperationsCount);
+            }
+
+            publishOps.update();
+
+            function updateClientChart(chart, id) {
+              var datasets = [];
+              var firstLabelSet = [];
+
+              for (var i = 0; i < itemsInMemoryKnownClients.length; i++) {
+                var data = [];
+                
+                for (var idx = 0; idx < itemsInMemoryHistory.length; idx++) {
+                  var c = itemsInMemoryHistory[idx].clients[itemsInMemoryKnownClients[i]];
+                  if (c == undefined) {
+                    data.push(0);
+                  } else {
+                    var d = c[id];
+                    if (d == undefined) {
+                      data.push(0);
+                    } else {
+                      data.push(d);
+                    }
+                  }
+                }
+
+                var dl = data.length;
+                for (var di = 0; di < 60 - data.length; di++) {
+                  data.unshift(0);
+                }
+
+                if (chart.data.datasets[i] === undefined) {
+                  // new client
+                  chart.data.datasets.push({
+                    label: itemsInMemoryKnownClients[i],
+                    data: data,
+                    borderColor: 'hsl(' + (360 * i / 8) + ', 75%, 50%)',
+                    backgroundColor: 'rgba(0,0,0,0)'
+                  });
+                } else {
+                  var diff = newSample - lastSample;
+                  for (var xi = 0; xi < diff; xi++) {
+                    chart.data.datasets[i].data.shift();
+                    chart.data.datasets[i].data.push(
+                      data[data.length - diff + xi]);
+                  }
+                }
+              }
+
+              chart.update();
+            }
+
+            updateClientChart(pullOps, 'pulledOperationsCount');
+            updateClientChart(ackOps, 'ackedOperationsCount');
+            updateClientChart(unreserveOps, 'unreservedOperationsCount');
+            updateClientChart(messageCount, 'unackedMessageInMemoryCount');
+            updateClientChart(reserveCount, 'reservedMessageInMemoryCount');
+            updateClientChart(dropCount, 'droppedOperationsCount');
+
+            lastSample = data.sampleCount;
+
+            setTimeout(updateData, 10000);
+          });
+        }
+
+        updateData();
+      });
+    </script>
+  </body>
+</html>

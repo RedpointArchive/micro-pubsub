@@ -5,6 +5,12 @@ An in-memory Pub/Sub server that supports explicit acknowledgements and shared c
 This server was written as a low-cost replacement to Google Pub/Sub during development and for
 non-HA configurations.
 
+## Screenshot
+
+A screenshot of the statistics page:
+
+![Statistics Page Example](/screenshot.png?raw=true "Statistics Page")
+
 ## Usage
 
 You can run this server like this:
@@ -14,6 +20,28 @@ node index.js
 ```
 
 It listens on port 8000.
+
+## Configuration
+
+Currently the Pub/Sub server supports the following environment variables, which change it's behaviour:
+
+### MAX_MESSAGE_STORAGE
+
+When the `MAX_MESSAGE_STORAGE` environment variable is set, this defines the maximum number of messages to keep in-memory
+for a given client.  To ensure that the server does not run out of available memory, this option defaults to 1000 messages
+per client.
+
+When the queue of unacked messages for a client exceeds `MAX_MESSAGE_STORAGE`, the Pub/Sub server will start dropping the
+oldest messages.
+
+You can set `MAX_MESSAGE_STORAGE` to `0` to indicate that there is no maximum to the number of messages (this prevents any
+messages from ever being dropped due to queue size).
+
+## Accessing Statistics
+
+To diagnose the operation of the Pub/Sub server, you can visit the `/stats` URL which will show you graphs regarding the
+minute-by-minute running of the server.  This is useful if you need to diagnose why a client isn't receiving messages, and
+can function as a dashboard to alert you of any services that are no longer processing messages.
 
 ## Client API
 
@@ -83,3 +111,8 @@ Return Example:
 ```
 {"result":true,"messageId":"56f87e03-e67e-4dc6-9f5e-75562bebff51"}
 ```
+
+### GET /stats.json
+
+Retrieves statistics about the operation of the Pub/Sub server.  The format of the result of this endpoint may change
+in the future.  This endpoint is used by the `/stats` page.
