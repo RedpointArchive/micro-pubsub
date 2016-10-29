@@ -286,8 +286,41 @@ function handleRequest(req, res) {
   }));
 }
 
+function handleStatsRequest(req, res) {
+  req.url = url.parse(req.url, true);
+  
+  if (req.url.pathname == '/stats.json') {
+    stats.renderJson(req, res);
+    return;
+  }
+
+  if (req.url.pathname == '/Chart.bundle.min.js') {
+    fs.readFile('Chart.bundle.min.js', 'utf8', (err, data) => {
+      res.writeHead(200, {'Content-Type': 'application/json'});
+      res.end(data);
+    });
+    return;
+  }
+
+  if (req.url.pathname == '/stats') {
+    stats.renderHtml(req, res);
+    return;
+  }
+
+  res.writeHead(404, {'Content-Type': 'application/json'});
+  res.end(JSON.stringify({
+    result: false,
+    error: 'endpoint not found' 
+  }));
+}
+
 let server = http.createServer(handleRequest);
 server.listen(8000, () => {
   console.log('pub/sub server listening on port 8000');
   stats.start(clients);
+});
+
+let statsServer = http.createServer(handleStatsRequest);
+statsServer.listen(8001, () => {
+  console.log('pub/sub stats-only server listening on port 8001');
 });

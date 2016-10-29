@@ -19,7 +19,11 @@ You can run this server like this:
 node index.js
 ```
 
-It listens on port 8000.
+The main server listens on port 8000.  It accepts requests to all endpoints.
+
+A statistics-only server listens on port 8001.  This will only respond to endpoint which provide statistics
+(`/stats.json` and `/stats`).  This allows you to safely expose port 8001 as a dashboard to the public web,
+while keeping port 8000 internal to your network.
 
 ## Configuration
 
