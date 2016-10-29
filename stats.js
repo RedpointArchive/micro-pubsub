@@ -25,7 +25,7 @@ function renderJson(req, res) {
 }
 
 function renderHtml(req, res) {
-  fs.readFile('stats.htm', 'utf8', (err, data) => {
+  fs.readFile(__dirname + '/stats.htm', 'utf8', (err, data) => {
     res.writeHead(200, {'Content-Type': 'text/html'});
     res.end(data);
   });

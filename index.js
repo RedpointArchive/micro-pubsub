@@ -267,7 +267,7 @@ function handleRequest(req, res) {
   }
 
   if (req.url.pathname == '/Chart.bundle.min.js') {
-    fs.readFile('Chart.bundle.min.js', 'utf8', (err, data) => {
+    fs.readFile(__dirname + '/Chart.bundle.min.js', 'utf8', (err, data) => {
       res.writeHead(200, {'Content-Type': 'application/json'});
       res.end(data);
     });
@@ -295,7 +295,7 @@ function handleStatsRequest(req, res) {
   }
 
   if (req.url.pathname == '/Chart.bundle.min.js') {
-    fs.readFile('Chart.bundle.min.js', 'utf8', (err, data) => {
+    fs.readFile(__dirname + '/Chart.bundle.min.js', 'utf8', (err, data) => {
       res.writeHead(200, {'Content-Type': 'application/json'});
       res.end(data);
     });
