@@ -302,7 +302,7 @@ function handleStatsRequest(req, res) {
     return;
   }
 
-  if (req.url.pathname == '/stats') {
+  if (req.url.pathname == '/stats' || req.url.pathname == '/') {
     stats.renderHtml(req, res);
     return;
   }
